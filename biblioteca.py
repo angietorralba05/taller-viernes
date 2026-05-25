@@ -1,8 +1,5 @@
+# ejercicio3.py
 import mysql.connector
-
-# ═══════════════════════════════════════════════════════
-# CONEXIÓN
-# ═══════════════════════════════════════════════════════
 
 def conectar():
     return mysql.connector.connect(
@@ -12,14 +9,9 @@ def conectar():
         database = 'libreria'
     )
 
-# ═══════════════════════════════════════════════════════
-# CREAR TABLAS
-# ═══════════════════════════════════════════════════════
-
 def crear_modelo():
     conexion = conectar()
     cursor = conexion.cursor()
-
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS clientes (
             id       INT          PRIMARY KEY AUTO_INCREMENT,
@@ -29,7 +21,6 @@ def crear_modelo():
             ciudad   VARCHAR(50)
         )
     ''')
-
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS libros (
             id        INT          PRIMARY KEY AUTO_INCREMENT,
@@ -40,7 +31,6 @@ def crear_modelo():
             categoria VARCHAR(50)
         )
     ''')
-
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS ventas (
             id         INT   PRIMARY KEY AUTO_INCREMENT,
@@ -53,12 +43,82 @@ def crear_modelo():
             FOREIGN KEY (libro_id)   REFERENCES libros(id)
         )
     ''')
-
     conexion.commit()
     conexion.close()
     print('Tablas creadas correctamente')
 
 crear_modelo()
+
+# ═══════════════════════════════════════════════════════
+# DATOS DE PRUEBA
+# ═══════════════════════════════════════════════════════
+
+def insertar_datos_prueba():
+    conexion = conectar()
+    cursor = conexion.cursor()
+
+    clientes = [
+        ('Laura Jimenez',  'laura@mail.com',  '3001234567', 'Bogota'),
+        ('Pedro Sanchez',  'pedro@mail.com',  '3119876543', 'Medellin'),
+        ('Diana Morales',  'diana@mail.com',  '3204567890', 'Cali'),
+        ('Andres Castro',  'andres@mail.com', '3055551234', 'Bogota'),
+        ('Sofia Herrera',  'sofia@mail.com',  '3177778888', 'Barranquilla'),
+    ]
+    for c in clientes:
+        cursor.execute('''
+            INSERT IGNORE INTO clientes (nombre, correo, telefono, ciudad)
+            VALUES (%s, %s, %s, %s)
+        ''', c)
+
+    libros = [
+        ('Cien Anos de Soledad',       'Gabriel Garcia Marquez', 45000,  20, 'Novela'),
+        ('El Principito',              'Antoine de Saint-Exupery', 25000, 30, 'Infantil'),
+        ('Harry Potter T1',            'J.K. Rowling',           55000,  15, 'Fantasia'),
+        ('Don Quijote de la Mancha',   'Miguel de Cervantes',    60000,  10, 'Clasico'),
+        ('El Alquimista',              'Paulo Coelho',           35000,  25, 'Novela'),
+        ('1984',                       'George Orwell',          40000,  18, 'Distopia'),
+    ]
+    for l in libros:
+        cursor.execute('''
+            INSERT IGNORE INTO libros (titulo, autor, precio, stock, categoria)
+            VALUES (%s, %s, %s, %s, %s)
+        ''', l)
+
+    conexion.commit()
+
+    # Ventas de prueba
+    ventas = [
+        (1, 1, 2),
+        (1, 3, 1),
+        (1, 5, 3),
+        (1, 2, 1),
+        (2, 2, 2),
+        (2, 4, 1),
+        (3, 1, 1),
+        (3, 6, 2),
+        (4, 3, 2),
+        (4, 5, 1),
+        (5, 2, 3),
+        (5, 1, 1),
+    ]
+    for cliente_id, libro_id, cantidad in ventas:
+        cursor.execute('SELECT precio, stock FROM libros WHERE id = %s', (libro_id,))
+        libro = cursor.fetchone()
+        if libro and libro[1] >= cantidad:
+            total = libro[0] * cantidad
+            cursor.execute('''
+                INSERT IGNORE INTO ventas (cantidad, total, cliente_id, libro_id)
+                VALUES (%s, %s, %s, %s)
+            ''', (cantidad, total, cliente_id, libro_id))
+            cursor.execute('''
+                UPDATE libros SET stock = stock - %s WHERE id = %s
+            ''', (cantidad, libro_id))
+
+    conexion.commit()
+    conexion.close()
+    print('Datos de prueba insertados')
+
+insertar_datos_prueba()
 
 # ═══════════════════════════════════════════════════════
 # CLIENTES

@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Base de datos con Python y SQL - Angie Torralba</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 60px auto; max-width: 900px; color: #222; line-height: 1.6; }
+    h1 { font-size: 26pt; text-align: center; color: #1a1a1a; margin-bottom: 4px; }
+    h2 { font-size: 16pt; color: #1a1a1a; border-bottom: 2px solid #444; padding-bottom: 4px; margin-top: 36px; }
+    h3 { font-size: 13pt; color: #333; margin-top: 24px; }
+    .subtitulo { text-align: center; font-size: 12pt; color: #555; margin-bottom: 2px; }
+    .fecha { text-align: center; font-size: 11pt; color: #777; margin-bottom: 30px; }
+    .separador { border: none; border-top: 1px solid #ccc; margin: 30px 0; }
+    pre {
+      background: #f4f4f4;
+      border-left: 4px solid #555;
+      padding: 14px 18px;
+      font-size: 9.5pt;
+      font-family: "Courier New", monospace;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin: 12px 0 20px 0;
+      border-radius: 2px;
+    }
+    .nota { background: #fffbe6; border-left: 4px solid #f0c040; padding: 10px 16px; margin: 12px 0; font-size: 10.5pt; }
+    ul li { margin-bottom: 4px; }
+    table { border-collapse: collapse; width: 100%; margin: 12px 0; font-size: 10.5pt; }
+    th { background: #444; color: #fff; padding: 8px 12px; text-align: left; }
+    td { border: 1px solid #ccc; padding: 7px 12px; }
+    tr:nth-child(even) td { background: #f9f9f9; }
+  </style>
+</head>
+<body>
+
+<h1>Base de datos con Python y SQL</h1>
+<p class="subtitulo">Angie Torralba</p>
+<p class="subtitulo">Taller Viernes</p>
+<p class="fecha">Mayo 2026</p>
+
+<hr class="separador">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Introducción</h2>
+<p>
+  Este documento presenta los ejercicios desarrollados en el taller de bases de datos con Python y SQL.
+  Se utilizó la librería <strong>mysql.connector</strong> para conectar Python con MySQL, y se trabajaron
+  cuatro sistemas distintos que cubren los conceptos fundamentales del manejo de bases de datos relacionales.
+</p>
+
+<h3>Conceptos aplicados</h3>
+<ul>
+  <li>Conexión a MySQL desde Python con <code>mysql.connector</code></li>
+  <li>Creación de tablas con <code>CREATE TABLE IF NOT EXISTS</code></li>
+  <li>Operaciones CRUD: <code>INSERT</code>, <code>SELECT</code>, <code>UPDATE</code>, <code>DELETE</code></li>
+  <li>Llaves primarias y foráneas (<code>PRIMARY KEY</code>, <code>FOREIGN KEY</code>)</li>
+  <li>Transacciones con <code>commit()</code> y <code>rollback()</code></li>
+  <li>Consultas avanzadas: <code>JOIN</code>, <code>GROUP BY</code>, <code>HAVING</code>, <code>ORDER BY</code></li>
+  <li>Menús interactivos de consola</li>
+</ul>
+
+<hr class="separador">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Módulo 1 — Tienda: Conexión y tabla de productos</h2>
+<p>Archivo: <strong>ejercicio1.py</strong> | Base de datos: <code>tienda</code></p>
+<p>
+  Primer ejercicio del taller. Se establece la conexión con MySQL y se crea la tabla
+  <code>productos</code>. Luego se insertan cinco productos de prueba usando una función reutilizable.
+</p>
+
+<h3>Tabla creada: <code>productos</code></h3>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Restricción</th></tr>
+  <tr><td>id</td><td>INT</td><td>PRIMARY KEY AUTO_INCREMENT</td></tr>
+  <tr><td>nombre</td><td>VARCHAR(100)</td><td>NOT NULL</td></tr>
+  <tr><td>precio</td><td>FLOAT</td><td>NOT NULL</td></tr>
+  <tr><td>stock</td><td>INT</td><td>DEFAULT 0</td></tr>
+  <tr><td>categoria</td><td>VARCHAR(50)</td><td>—</td></tr>
+</table>
+
+<h3>Código</h3>
+<pre>
+# ejercicio1.py
+import mysql.connector
+
+# ═══════════════════════════════════════════════════════
+# CONEXIÓN
+# ═══════════════════════════════════════════════════════
+
+def conectar():
+    return mysql.connector.connect(
+        host = 'localhost',
+        user = 'root',
+        password = '',
+        database = 'tienda'
+    )
+
+# ═══════════════════════════════════════════════════════
+# TALLER 1.1 — Crear tabla productos
+# ═══════════════════════════════════════════════════════
+
+def crear_bd_tienda():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS productos (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            nombre VARCHAR(100) NOT NULL,
+            precio FLOAT NOT NULL,
+            stock INT DEFAULT 0,
+            categoria VARCHAR(50)
+        )
+    ''')
+    conexion.commit()
+    print('Base de datos lista')
+    print('Tabla productos creada')
+    conexion.close()
+
+crear_bd_tienda()
+
+# ═══════════════════════════════════════════════════════
+# TALLER 1.2 — Insertar productos
+# ═══════════════════════════════════════════════════════
+
+def insertar_producto(nombre, precio, stock, categoria):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        INSERT INTO productos (nombre, precio, stock, categoria)
+        VALUES (%s, %s, %s, %s)
+    ''', (nombre, precio, stock, categoria))
+    conexion.commit()
+    print(f'Producto {nombre} insertado correctamente')
+    conexion.close()
+
+insertar_producto('Laptop HP',             2500000, 10, 'Tecnologia')
+insertar_producto('Mouse inalambrico',       85000, 50, 'Accesorios')
+insertar_producto('Cuaderno universitario',  12000, 200,'Papeleria')
+insertar_producto('Audifonos Bluetooth',    320000, 25, 'Tecnologia')
+insertar_producto('Mochila',               150000, 30, 'Accesorios')
+</pre>
+
+<div class="nota">
+  <strong>Concepto clave:</strong> Se usan <em>parámetros posicionales</em> (<code>%s</code>) en las consultas para evitar
+  inyección SQL. Nunca se concatenan strings directamente con valores del usuario.
+</div>
+
+<hr class="separador">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Módulo 2 — Universidad: CRUD completo de estudiantes</h2>
+<p>Archivo: <strong>universidad.py</strong> | Base de datos: <code>universidad</code></p>
+<p>
+  Sistema completo de gestión de estudiantes que cubre las cuatro operaciones CRUD:
+  crear, leer, actualizar y eliminar. Incluye un menú interactivo de consola.
+</p>
+
+<h3>Tabla creada: <code>estudiantes</code></h3>
+<table>
+  <tr><th>Campo</th><th>Tipo</th><th>Restricción</th></tr>
+  <tr><td>id</td><td>INT</td><td>PRIMARY KEY AUTO_INCREMENT</td></tr>
+  <tr><td>nombre</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+  <tr><td>apellido</td><td>VARCHAR(50)</td><td>NOT NULL</td></tr>
+  <tr><td>correo</td><td>VARCHAR(100)</td><td>UNIQUE NOT NULL</td></tr>
+  <tr><td>edad</td><td>INT</td><td>—</td></tr>
+  <tr><td>promedio</td><td>FLOAT</td><td>DEFAULT 0.0</td></tr>
+</table>
+
+<h3>Código</h3>
+<pre>
+import mysql.connector
+
+# ═══════════════════════════════════════════════════════
+# CONEXIÓN
+# ═══════════════════════════════════════════════════════
+
+def conectar():
+    return mysql.connector.connect(
+        host = 'localhost',
+        user = 'root',
+        password = '',
+        database = 'universidad'
+    )
+
+# ═══════════════════════════════════════════════════════
+# MÓDULO 1 — Conectar y crear tabla
+# ═══════════════════════════════════════════════════════
+
+def crear_tabla():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS estudiantes (
+            id INT PRIMARY KEY AUTO_INCREMENT,
+            nombre VARCHAR(50) NOT NULL,
+            apellido VARCHAR(50) NOT NULL,
+            correo VARCHAR(100) UNIQUE NOT NULL,
+            edad INT,
+            promedio FLOAT DEFAULT 0.0
+        )
+    ''')
+    conexion.commit()
+    print('Tabla estudiantes creada exitosamente')
+    conexion.close()
+
+crear_tabla()
+
+# ═══════════════════════════════════════════════════════
+# MÓDULO 1 — Insertar datos
+# ═══════════════════════════════════════════════════════
+
+def insertar_estudiante(nombre, apellido, correo, edad, promedio):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        INSERT INTO estudiantes (nombre, apellido, correo, edad, promedio)
+        VALUES (%s, %s, %s, %s, %s)
+    ''', (nombre, apellido, correo, edad, promedio))
+    conexion.commit()
+    print(f'Estudiante {nombre} {apellido} insertado correctamente')
+    conexion.close()
+
+insertar_estudiante('Maria',  'Lopez',   'maria@uni.edu',  19, 4.2)
+insertar_estudiante('Carlos', 'Ramirez', 'carlos@uni.edu', 20, 3.8)
+insertar_estudiante('Ana',    'Torres',  'ana@uni.edu',    18, 4.7)
+
+# ═══════════════════════════════════════════════════════
+# MÓDULO 2 — Leer datos
+# ═══════════════════════════════════════════════════════
+
+def obtener_todos():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('SELECT * FROM estudiantes')
+    estudiantes = cursor.fetchall()
+    conexion.close()
+    return estudiantes
+
+def obtener_por_id(id_estudiante):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('SELECT * FROM estudiantes WHERE id = %s', (id_estudiante,))
+    estudiante = cursor.fetchone()
+    conexion.close()
+    return estudiante
+
+def mostrar_estudiantes():
+    print('=' * 65)
+    print(f'{"ID":<5} {"NOMBRE":<15} {"APELLIDO":<15} {"CORREO":<20} {"PROMEDIO"}')
+    print('=' * 65)
+    for e in obtener_todos():
+        print(f'{e[0]:<5} {e[1]:<15} {e[2]:<15} {e[3]:<20} {e[5]:.1f}')
+    print('=' * 65)
+    print(f'Total: {len(obtener_todos())} estudiantes')
+
+mostrar_estudiantes()
+
+# ═══════════════════════════════════════════════════════
+# MÓDULO 2 — Actualizar datos
+# ═══════════════════════════════════════════════════════
+
+def actualizar_promedio(id_estudiante, nuevo_promedio):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        UPDATE estudiantes
+        SET promedio = %s
+        WHERE id = %s
+    ''', (nuevo_promedio, id_estudiante))
+    if cursor.rowcount > 0:
+        print(f'Promedio actualizado para el estudiante ID {id_estudiante}')
+    else:
+        print(f'No se encontro estudiante con ID {id_estudiante}')
+    conexion.commit()
+    conexion.close()
+
+def actualizar_datos_completos(id_est, nombre, apellido, edad):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        UPDATE estudiantes
+        SET nombre = %s, apellido = %s, edad = %s
+        WHERE id = %s
+    ''', (nombre, apellido, edad, id_est))
+    conexion.commit()
+    print('Datos actualizados correctamente')
+    conexion.close()
+
+actualizar_promedio(1, 4.5)
+actualizar_datos_completos(2, 'Carlos Alberto', 'Ramirez', 21)
+
+# ═══════════════════════════════════════════════════════
+# MÓDULO 2 — Eliminar datos
+# ═══════════════════════════════════════════════════════
+
+def eliminar_estudiante(id_estudiante):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('SELECT nombre FROM estudiantes WHERE id = %s', (id_estudiante,))
+    resultado = cursor.fetchone()
+    if resultado is None:
+        print(f'Error: no existe estudiante con ID {id_estudiante}')
+        conexion.close()
+        return
+    confirmacion = input(f'Eliminar a {resultado[0]}? (s/n): ')
+    if confirmacion.lower() == 's':
+        cursor.execute('DELETE FROM estudiantes WHERE id = %s', (id_estudiante,))
+        conexion.commit()
+        print(f'Estudiante {resultado[0]} eliminado')
+    else:
+        print('Operacion cancelada')
+    conexion.close()
+
+eliminar_estudiante(3)
+
+# ═══════════════════════════════════════════════════════
+# TALLER 2.1 — Sistema CRUD con menú
+# ═══════════════════════════════════════════════════════
+
+def crear_estudiante():
+    print('\n--- NUEVO ESTUDIANTE ---')
+    nombre   = input('Nombre: ').strip()
+    apellido = input('Apellido: ').strip()
+    correo   = input('Correo: ').strip()
+    edad     = int(input('Edad: '))
+    promedio = float(input('Promedio (0.0 - 5.0): '))
+    try:
+        conexion = conectar()
+        cursor = conexion.cursor()
+        cursor.execute(
+            'INSERT INTO estudiantes (nombre, apellido, correo, edad, promedio) VALUES (%s,%s,%s,%s,%s)',
+            (nombre, apellido, correo, edad, promedio))
+        conexion.commit()
+        conexion.close()
+        print(f'Estudiante {nombre} registrado exitosamente')
+    except mysql.connector.IntegrityError:
+        print('Error: ese correo ya esta registrado')
+
+def listar_estudiantes():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('SELECT * FROM estudiantes ORDER BY apellido')
+    filas = cursor.fetchall()
+    conexion.close()
+    if not filas:
+        print('No hay estudiantes registrados')
+        return
+    print(f"\n{'ID':<4} {'Nombre':<15} {'Apellido':<15} {'Correo':<22} {'Edad':>4} {'Prom':>5}")
+    print('-' * 70)
+    for f in filas:
+        print(f'{f[0]:<4} {f[1]:<15} {f[2]:<15} {f[3]:<22} {f[4]:>4} {f[5]:>5.1f}')
+    print(f'Total: {len(filas)} estudiantes')
+
+def menu():
+    while True:
+        print('\n===== SISTEMA DE ESTUDIANTES =====')
+        print('1. Agregar estudiante')
+        print('2. Ver todos los estudiantes')
+        print('3. Salir')
+        opcion = input('Seleccione: ')
+        if   opcion == '1': crear_estudiante()
+        elif opcion == '2': listar_estudiantes()
+        elif opcion == '3':
+            print('Hasta luego')
+            break
+        else: print('Opcion no valida')
+
+menu()
+</pre>
+
+<div class="nota">
+  <strong>Conceptos clave:</strong>
+  <ul style="margin:6px 0 0 0;">
+    <li><code>cursor.rowcount</code> indica cuántas filas fueron afectadas por el UPDATE.</li>
+    <li><code>UNIQUE NOT NULL</code> en correo garantiza que no haya duplicados; el error se captura con <code>IntegrityError</code>.</li>
+    <li>La eliminación solicita confirmación antes de ejecutar el DELETE.</li>
+  </ul>
+</div>
+
+<hr class="separador">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Módulo 3 — Sistema de Ventas: tablas relacionadas</h2>
+<p>Archivo: <strong>ventas.py</strong> | Base de datos: <code>ventas</code></p>
+<p>
+  Sistema con tres tablas relacionadas: <code>clientes</code>, <code>productos</code> y <code>ventas</code>.
+  Aplica <strong>transacciones</strong> para garantizar la integridad al registrar una venta
+  (descuento de stock + inserción de la venta se hacen atómicamente).
+</p>
+
+<h3>Modelo relacional</h3>
+<table>
+  <tr><th>Tabla</th><th>Campos principales</th><th>Relación</th></tr>
+  <tr><td>clientes</td><td>id, nombre, correo, telefono, ciudad</td><td>—</td></tr>
+  <tr><td>productos</td><td>id, nombre, precio, stock, categoria</td><td>—</td></tr>
+  <tr><td>ventas</td><td>id, fecha, cantidad, total, cliente_id, producto_id</td><td>FK → clientes, FK → productos</td></tr>
+</table>
+
+<h3>Código</h3>
+<pre>
+# ventas.py
+import mysql.connector
+
+def conectar():
+    return mysql.connector.connect(
+        host='localhost', user='root', password='', database='ventas'
+    )
+
+# ═══════════════════════════════════════════════════════
+# CREAR TABLAS
+# ═══════════════════════════════════════════════════════
+
+def crear_modelo_ventas():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS clientes (
+            id       INT          PRIMARY KEY AUTO_INCREMENT,
+            nombre   VARCHAR(100) NOT NULL,
+            correo   VARCHAR(100) UNIQUE NOT NULL,
+            telefono VARCHAR(20),
+            ciudad   VARCHAR(50)
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS productos (
+            id        INT          PRIMARY KEY AUTO_INCREMENT,
+            nombre    VARCHAR(100) NOT NULL,
+            precio    FLOAT        NOT NULL,
+            stock     INT          DEFAULT 0,
+            categoria VARCHAR(50)
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ventas (
+            id          INT   PRIMARY KEY AUTO_INCREMENT,
+            fecha       DATE  DEFAULT (CURRENT_DATE),
+            cantidad    INT   NOT NULL,
+            total       FLOAT NOT NULL,
+            cliente_id  INT   NOT NULL,
+            producto_id INT   NOT NULL,
+            FOREIGN KEY (cliente_id)  REFERENCES clientes(id),
+            FOREIGN KEY (producto_id) REFERENCES productos(id)
+        )
+    ''')
+    conexion.commit()
+    conexion.close()
+    print('Modelo de ventas creado correctamente')
+
+crear_modelo_ventas()
+
+# ═══════════════════════════════════════════════════════
+# REGISTRAR VENTA CON TRANSACCIÓN
+# ═══════════════════════════════════════════════════════
+
+def registrar_venta():
+    listar_clientes()
+    listar_productos()
+    try:
+        cliente_id  = int(input('\nID del cliente: '))
+        producto_id = int(input('ID del producto: '))
+        cantidad    = int(input('Cantidad: '))
+    except ValueError:
+        print('Valor invalido')
+        return
+
+    conexion = conectar()
+    cursor = conexion.cursor()
+    try:
+        cursor.execute('SELECT nombre, precio, stock FROM productos WHERE id = %s',
+                       (producto_id,))
+        producto = cursor.fetchone()
+        if producto is None:
+            raise ValueError('Producto no encontrado')
+        nombre_prod, precio, stock_actual = producto
+        if stock_actual < cantidad:
+            raise ValueError(f'Stock insuficiente. Disponible: {stock_actual}')
+        total = precio * cantidad
+        cursor.execute('''
+            INSERT INTO ventas (cantidad, total, cliente_id, producto_id)
+            VALUES (%s, %s, %s, %s)
+        ''', (cantidad, total, cliente_id, producto_id))
+        cursor.execute('''
+            UPDATE productos SET stock = stock - %s WHERE id = %s
+        ''', (cantidad, producto_id))
+        conexion.commit()
+        print(f'✓ Venta registrada: {cantidad}x {nombre_prod} = ${total:,.0f}')
+    except (ValueError, mysql.connector.Error) as e:
+        conexion.rollback()
+        print(f'✗ Error: {e}')
+    finally:
+        conexion.close()
+
+# ═══════════════════════════════════════════════════════
+# REPORTES
+# ═══════════════════════════════════════════════════════
+
+def reportes_estadisticos():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    print('\n===== ESTADÍSTICAS DE VENTAS =====')
+    cursor.execute('SELECT SUM(total), AVG(total), MAX(total), MIN(total) FROM ventas')
+    total, promedio, maxima, minima = cursor.fetchone()
+    print(f'Total vendido:       ${total or 0:>12,.0f}')
+    print(f'Promedio por venta:  ${promedio or 0:>12,.0f}')
+    print(f'Venta más alta:      ${maxima or 0:>12,.0f}')
+    print(f'Venta más baja:      ${minima or 0:>12,.0f}')
+
+    print('\n--- Ventas por ciudad ---')
+    cursor.execute('''
+        SELECT c.ciudad, COUNT(v.id), SUM(v.total)
+        FROM ventas v
+        INNER JOIN clientes c ON v.cliente_id = c.id
+        GROUP BY c.ciudad
+        ORDER BY SUM(v.total) DESC
+    ''')
+    for fila in cursor.fetchall():
+        print(f'  {fila[0]:<15} {fila[1]:>3} ventas   ${fila[2]:>10,.0f}')
+
+    print('\n--- Top 3 productos ---')
+    cursor.execute('''
+        SELECT p.nombre, SUM(v.cantidad)
+        FROM ventas v
+        INNER JOIN productos p ON v.producto_id = p.id
+        GROUP BY p.id
+        ORDER BY SUM(v.cantidad) DESC
+        LIMIT 3
+    ''')
+    for i, fila in enumerate(cursor.fetchall(), 1):
+        print(f'  {i}. {fila[0]:<20} {fila[1]:>5} unidades')
+    conexion.close()
+
+# ═══════════════════════════════════════════════════════
+# MENÚ PRINCIPAL
+# ═══════════════════════════════════════════════════════
+
+def menu():
+    while True:
+        print('\n===== SISTEMA DE VENTAS =====')
+        print('1. Agregar cliente')
+        print('2. Ver clientes')
+        print('3. Agregar producto')
+        print('4. Ver productos')
+        print('5. Registrar venta')
+        print('6. Ver reporte de ventas')
+        print('7. Ver estadisticas')
+        print('0. Salir')
+        opcion = input('\nSeleccione: ').strip()
+        if   opcion == '1': agregar_cliente()
+        elif opcion == '2': listar_clientes()
+        elif opcion == '3': agregar_producto()
+        elif opcion == '4': listar_productos()
+        elif opcion == '5': registrar_venta()
+        elif opcion == '6': reporte_ventas_detallado()
+        elif opcion == '7': reportes_estadisticos()
+        elif opcion == '0': print('Hasta luego'); break
+        else: print('Opcion no valida')
+
+menu()
+</pre>
+
+<div class="nota">
+  <strong>Concepto clave — Transacciones:</strong>
+  Si el stock es insuficiente o ocurre un error en la BD, se ejecuta <code>rollback()</code>:
+  ningún cambio queda guardado. Solo si todo sale bien se llama <code>commit()</code>.
+  Esto garantiza la <em>atomicidad</em> de la operación.
+</div>
+
+<hr class="separador">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Módulo 4 — Librería: sistema avanzado con reportes</h2>
+<p>Archivo: <strong>biblioteca.py</strong> | Base de datos: <code>libreria</code></p>
+<p>
+  Sistema de librería universitaria con tres tablas relacionadas: <code>clientes</code>,
+  <code>libros</code> y <code>ventas</code>. Incluye reportes avanzados usando
+  <code>GROUP BY</code>, <code>HAVING</code>, <code>INNER JOIN</code> y funciones de agregación.
+</p>
+
+<h3>Modelo relacional</h3>
+<table>
+  <tr><th>Tabla</th><th>Campos principales</th><th>Relación</th></tr>
+  <tr><td>clientes</td><td>id, nombre, correo, telefono, ciudad</td><td>—</td></tr>
+  <tr><td>libros</td><td>id, titulo, autor, precio, stock, categoria</td><td>—</td></tr>
+  <tr><td>ventas</td><td>id, fecha, cantidad, total, cliente_id, libro_id</td><td>FK → clientes, FK → libros</td></tr>
+</table>
+
+<h3>Código</h3>
+<pre>
+# biblioteca.py
+import mysql.connector
+
+def conectar():
+    return mysql.connector.connect(
+        host='localhost', user='root', password='', database='libreria'
+    )
+
+# ═══════════════════════════════════════════════════════
+# CREAR TABLAS
+# ═══════════════════════════════════════════════════════
+
+def crear_modelo():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS clientes (
+            id       INT          PRIMARY KEY AUTO_INCREMENT,
+            nombre   VARCHAR(100) NOT NULL,
+            correo   VARCHAR(100) UNIQUE NOT NULL,
+            telefono VARCHAR(20),
+            ciudad   VARCHAR(50)
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS libros (
+            id        INT          PRIMARY KEY AUTO_INCREMENT,
+            titulo    VARCHAR(200) NOT NULL,
+            autor     VARCHAR(100) NOT NULL,
+            precio    FLOAT        NOT NULL,
+            stock     INT          DEFAULT 0,
+            categoria VARCHAR(50)
+        )
+    ''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS ventas (
+            id         INT   PRIMARY KEY AUTO_INCREMENT,
+            fecha      DATE  DEFAULT (CURRENT_DATE),
+            cantidad   INT   NOT NULL,
+            total      FLOAT NOT NULL,
+            cliente_id  INT  NOT NULL,
+            libro_id    INT  NOT NULL,
+            FOREIGN KEY (cliente_id) REFERENCES clientes(id),
+            FOREIGN KEY (libro_id)   REFERENCES libros(id)
+        )
+    ''')
+    conexion.commit()
+    conexion.close()
+    print('Tablas creadas correctamente')
+
+crear_modelo()
+
+# ═══════════════════════════════════════════════════════
+# REPORTE VENTAS POR MES
+# ═══════════════════════════════════════════════════════
+
+def reporte_ventas_por_mes():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        SELECT
+            DATE_FORMAT(fecha, '%Y-%m') AS mes,
+            COUNT(*) AS num_ventas,
+            SUM(total) AS total_mes
+        FROM ventas
+        GROUP BY DATE_FORMAT(fecha, '%Y-%m')
+        ORDER BY mes DESC
+    ''')
+    filas = cursor.fetchall()
+    conexion.close()
+    print(f"\n{'Mes':<10} {'Ventas':>7} {'Total':>15}")
+    print('-' * 35)
+    for f in filas:
+        print(f'{f[0]:<10} {f[1]:>7} ${f[2]:>12,.0f}')
+
+# ═══════════════════════════════════════════════════════
+# LIBROS MÁS VENDIDOS
+# ═══════════════════════════════════════════════════════
+
+def libros_mas_vendidos(top_n=3):
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        SELECT l.titulo, l.autor, SUM(v.cantidad) AS total_unidades
+        FROM ventas v
+        INNER JOIN libros l ON v.libro_id = l.id
+        GROUP BY l.id
+        ORDER BY total_unidades DESC
+        LIMIT %s
+    ''', (top_n,))
+    filas = cursor.fetchall()
+    conexion.close()
+    print(f'\n--- Top {top_n} libros más vendidos ---')
+    for i, f in enumerate(filas, 1):
+        print(f'  {i}. {f[0]:<30} {f[1]:<20} {f[2]:>5} unidades')
+
+# ═══════════════════════════════════════════════════════
+# CLIENTES FRECUENTES  (HAVING)
+# ═══════════════════════════════════════════════════════
+
+def clientes_frecuentes():
+    conexion = conectar()
+    cursor = conexion.cursor()
+    cursor.execute('''
+        SELECT c.nombre, c.ciudad, COUNT(v.id) AS num_compras, SUM(v.total) AS total
+        FROM ventas v
+        INNER JOIN clientes c ON v.cliente_id = c.id
+        GROUP BY c.id
+        HAVING COUNT(v.id) > 3
+        ORDER BY num_compras DESC
+    ''')
+    filas = cursor.fetchall()
+    conexion.close()
+    print('\n--- Clientes frecuentes (más de 3 compras) ---')
+    for f in filas:
+        print(f'  {f[0]:<20} {f[1]:<12} {f[2]:>3} compras  ${f[3]:>10,.0f}')
+
+# ═══════════════════════════════════════════════════════
+# MENÚ PRINCIPAL
+# ═══════════════════════════════════════════════════════
+
+def menu():
+    while True:
+        print('\n===== LIBRERÍA UNIVERSITARIA =====')
+        print('1. Agregar cliente')
+        print('2. Ver clientes')
+        print('3. Agregar libro')
+        print('4. Ver libros')
+        print('5. Registrar venta')
+        print('6. Reporte ventas por mes')
+        print('7. Libros más vendidos')
+        print('8. Clientes frecuentes')
+        print('0. Salir')
+        opcion = input('\nSeleccione: ').strip()
+        if   opcion == '1': agregar_cliente()
+        elif opcion == '2': listar_clientes()
+        elif opcion == '3': agregar_libro()
+        elif opcion == '4': listar_libros()
+        elif opcion == '5': registrar_venta()
+        elif opcion == '6': reporte_ventas_por_mes()
+        elif opcion == '7':
+            try:
+                n = int(input('¿Top cuántos libros? (default 3): ') or 3)
+            except ValueError:
+                n = 3
+            libros_mas_vendidos(n)
+        elif opcion == '8': clientes_frecuentes()
+        elif opcion == '0': print('Hasta luego'); break
+        else: print('Opcion no valida')
+
+menu()
+</pre>
+
+<div class="nota">
+  <strong>Conceptos clave — Consultas avanzadas:</strong>
+  <ul style="margin:6px 0 0 0;">
+    <li><code>INNER JOIN</code>: une dos tablas por su relación (cliente_id / libro_id).</li>
+    <li><code>GROUP BY</code>: agrupa resultados por una columna para aplicar funciones de agregación (<code>SUM</code>, <code>COUNT</code>).</li>
+    <li><code>HAVING</code>: filtra grupos (similar a WHERE, pero sobre el resultado del GROUP BY).</li>
+    <li><code>DATE_FORMAT</code>: formatea fechas para agrupar por mes.</li>
+  </ul>
+</div>
+
+<hr class="separador">
+
+<!-- ══════════════════════════════════════════════ -->
+<h2>Conclusiones</h2>
+<ul>
+  <li>Se implementaron cuatro sistemas de gestión de bases de datos usando Python y MySQL.</li>
+  <li>Se aplicaron correctamente las operaciones CRUD en todos los módulos.</li>
+  <li>El uso de <strong>transacciones</strong> (<code>commit</code> / <code>rollback</code>) garantiza la integridad
+      de los datos en operaciones críticas como el registro de ventas.</li>
+  <li>Las <strong>llaves foráneas</strong> establecen relaciones entre tablas y previenen registros huérfanos.</li>
+  <li>Las consultas con <strong>JOIN, GROUP BY y HAVING</strong> permiten generar reportes complejos
+      directamente desde SQL, sin necesidad de procesar los datos en Python.</li>
+  <li>El uso de <strong>parámetros posicionales</strong> (<code>%s</code>) previene inyección SQL en todas las consultas.</li>
+</ul>
+
+<hr class="separador">
+<p style="text-align:center; color:#888; font-size:10pt;">Angie Torralba &nbsp;|&nbsp; Taller Viernes &nbsp;|&nbsp; Mayo 2026</p>
+
+</body>
+</html>
